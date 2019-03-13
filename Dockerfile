@@ -98,8 +98,7 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& cd /usr/src \
 	&& git clone https://github.com/google/ngx_brotli.git \
 	&& cd ngx_brotli \
-	&& git submodule init \
-	&& git submodule update \
+	&& git submodule update --init \
 	&& cd /usr/src/nginx-$NGINX_VERSION \
 	&& ./configure $CONFIG --with-debug \
 	&& make -j$(getconf _NPROCESSORS_ONLN) \
