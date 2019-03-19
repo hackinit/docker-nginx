@@ -31,7 +31,7 @@ Module [ngx_brotli](https://github.com/google/ngx_brotli) has been added for Bro
 ## Build
 
 ```bash
-git clone git@github.com:hackinit/docker-nginx.git
+git clone git://github.com/hackinit/docker-nginx.git
 cd docker-nginx
 docker build -t nginx:1.15.9-modified .
 ```
