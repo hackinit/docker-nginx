@@ -2,7 +2,7 @@ FROM alpine:3.9
 
 LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 
-ENV NGINX_VERSION 1.15.11
+ENV NGINX_VERSION 1.15.12
 
 RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& CONFIG="\
@@ -68,7 +68,6 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 		gd-dev \
 		geoip-dev \
 		git \
-		patch \
 	&& curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz -o nginx.tar.gz \
 	&& curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc  -o nginx.tar.gz.asc \
 	&& curl -fSL https://www.openssl.org/source/openssl-1.1.1b.tar.gz -o openssl-1.1.1b.tar.gz \
@@ -91,10 +90,6 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& tar -zxC /usr/src -f openssl-1.1.1b.tar.gz \
 	&& rm -f nginx.tar.gz \
 	&& rm -f openssl-1.1.1b.tar.gz \
-	&& cd /usr/src \
-	&& git clone https://github.com/hakasenyang/openssl-patch.git \
-	&& cd openssl-1.1.1b \
-	&& patch -p1 < ../openssl-patch/openssl-equal-1.1.1b_ciphers.patch \
 	&& cd /usr/src \
 	&& git clone https://github.com/google/ngx_brotli.git \
 	&& cd ngx_brotli \
@@ -126,7 +121,6 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& rm -rf /usr/src/nginx-$NGINX_VERSION \
 	&& rm -rf /usr/src/openssl-1.1.1b \
 	&& rm -rf /usr/src/ngx_brotli \
-	&& rm -rf /usr/src/openssl-patch \
 	\
 	# Bring in gettext so we can get `envsubst`, then throw
 	# the rest away. To do this, we need to install `gettext`
