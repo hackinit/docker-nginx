@@ -3,6 +3,7 @@ FROM alpine:3.9
 LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 
 ENV NGINX_VERSION 1.16.0
+ENV BROTLI_COMMIT_HASH 8104036af9cff4b1d34f22d00ba857e2a93a243c
 
 RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
     # Nginx Build Config
@@ -101,7 +102,10 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
     # Downloading Brotli
     && echo "Downloading Brotli" \
 	&& cd /usr/src \
-	&& git clone --recursive https://github.com/google/ngx_brotli.git \
+	&& git clone --recursive https://github.com/eustas/ngx_brotli.git \
+    && cd ngx_brotli \
+	&& git checkout -b $BROTLI_COMMIT_HASH $BROTLI_COMMIT_HASH \
+	&& cd .. \
     # Building Nginx
     && echo "Building Nginx" \
 	&& cd /usr/src/nginx-$NGINX_VERSION \
