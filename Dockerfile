@@ -5,8 +5,9 @@ LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 ENV NGINX_VERSION 1.15.12
 
 RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
+    # Nginx Build Config
 	&& CONFIG="\
-		--add-module=../ngx_brotli \
+		--add-module=/usr/src/ngx_brotli \
 		--prefix=/etc/nginx \
 		--sbin-path=/usr/sbin/nginx \
 		--modules-path=/usr/lib/nginx/modules \
@@ -51,8 +52,10 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 		--with-file-aio \
 		--with-http_v2_module \
 	" \
+    # Nginx will be run under user nginx:nginx
 	&& addgroup -S nginx \
 	&& adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx \
+    # Installing build dependencies
 	&& apk add --no-cache --virtual .build-deps \
 		gcc \
 		libc-dev \
@@ -67,6 +70,9 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 		gd-dev \
 		geoip-dev \
 		git \
+    && mkdir -p /usr/src \
+	&& cd /usr/src \
+    && echo "Downloading Nginx" \
 	&& curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz -o nginx.tar.gz \
 	&& curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc  -o nginx.tar.gz.asc \
     # Verifying Nginx
@@ -84,14 +90,14 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	test -z "$found" && echo >&2 "error: failed to fetch GPG key $GPG_KEYS" && exit 1; \
 	gpg --batch --verify nginx.tar.gz.asc nginx.tar.gz \
 	&& rm -rf "$GNUPGHOME" nginx.tar.gz.asc \
-	&& mkdir -p /usr/src \
 	&& tar -zxC /usr/src -f nginx.tar.gz \
 	&& rm -f nginx.tar.gz \
     # Downloading Brotli
+    && echo "Downloading Brotli" \
 	&& cd /usr/src \
-	&& git clone https://github.com/google/ngx_brotli.git \
-	&& cd ngx_brotli \
-	&& git submodule update --init \
+	&& git clone --recursive https://github.com/google/ngx_brotli.git \
+    # Building Nginx
+    && echo "Building Nginx" \
 	&& cd /usr/src/nginx-$NGINX_VERSION \
 	&& ./configure $CONFIG --with-debug \
 	&& make -j$(getconf _NPROCESSORS_ONLN) \
@@ -148,7 +154,7 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY nginx.vh.default.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
+EXPOSE 80 443
 
 STOPSIGNAL SIGTERM
 
