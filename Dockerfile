@@ -7,7 +7,6 @@ ENV NGINX_VERSION 1.15.12
 RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& CONFIG="\
 		--add-module=../ngx_brotli \
-		--with-openssl=../openssl-1.1.1b \
 		--prefix=/etc/nginx \
 		--sbin-path=/usr/sbin/nginx \
 		--modules-path=/usr/lib/nginx/modules \
@@ -70,7 +69,7 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 		git \
 	&& curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz -o nginx.tar.gz \
 	&& curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc  -o nginx.tar.gz.asc \
-	&& curl -fSL https://www.openssl.org/source/openssl-1.1.1b.tar.gz -o openssl-1.1.1b.tar.gz \
+    # Verifying Nginx
 	&& export GNUPGHOME="$(mktemp -d)" \
 	&& found=''; \
 	for server in \
@@ -87,9 +86,8 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& rm -rf "$GNUPGHOME" nginx.tar.gz.asc \
 	&& mkdir -p /usr/src \
 	&& tar -zxC /usr/src -f nginx.tar.gz \
-	&& tar -zxC /usr/src -f openssl-1.1.1b.tar.gz \
 	&& rm -f nginx.tar.gz \
-	&& rm -f openssl-1.1.1b.tar.gz \
+    # Downloading Brotli
 	&& cd /usr/src \
 	&& git clone https://github.com/google/ngx_brotli.git \
 	&& cd ngx_brotli \
@@ -119,7 +117,6 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& strip /usr/sbin/nginx* \
 	&& strip /usr/lib/nginx/modules/*.so \
 	&& rm -rf /usr/src/nginx-$NGINX_VERSION \
-	&& rm -rf /usr/src/openssl-1.1.1b \
 	&& rm -rf /usr/src/ngx_brotli \
 	\
 	# Bring in gettext so we can get `envsubst`, then throw
