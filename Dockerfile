@@ -69,7 +69,13 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 		libxslt-dev \
 		gd-dev \
 		geoip-dev \
+    && apk add --no-cache --virtual .brotli-build-deps \
+		autoconf \
+		libtool \
+		automake \
 		git \
+		g++ \
+		cmake \
     && mkdir -p /usr/src \
 	&& cd /usr/src \
     && echo "Downloading Nginx" \
@@ -140,6 +146,7 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	)" \
 	&& apk add --no-cache --virtual .nginx-rundeps $runDeps \
 	&& apk del .build-deps \
+	&& apk del .brotli-build-deps \
 	&& apk del .gettext \
 	&& mv /tmp/envsubst /usr/local/bin/ \
 	\
