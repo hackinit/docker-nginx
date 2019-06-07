@@ -2,12 +2,12 @@ FROM alpine:3.9
 
 LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 
-ENV NGINX_VERSION 1.15.12
+ENV NGINX_VERSION 1.16.0
 
 RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
+    # Nginx Build Config
 	&& CONFIG="\
-		--add-module=../ngx_brotli \
-		--with-openssl=../openssl-1.1.1b \
+		--add-module=/usr/src/ngx_brotli \
 		--prefix=/etc/nginx \
 		--sbin-path=/usr/sbin/nginx \
 		--modules-path=/usr/lib/nginx/modules \
@@ -52,8 +52,10 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 		--with-file-aio \
 		--with-http_v2_module \
 	" \
+    # Nginx will be run under user nginx:nginx
 	&& addgroup -S nginx \
 	&& adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx \
+    # Installing build dependencies
 	&& apk add --no-cache --virtual .build-deps \
 		gcc \
 		libc-dev \
@@ -67,10 +69,19 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 		libxslt-dev \
 		gd-dev \
 		geoip-dev \
+    && apk add --no-cache --virtual .brotli-build-deps \
+		autoconf \
+		libtool \
+		automake \
 		git \
+		g++ \
+		cmake \
+    && mkdir -p /usr/src \
+	&& cd /usr/src \
+    && echo "Downloading Nginx" \
 	&& curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz -o nginx.tar.gz \
 	&& curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc  -o nginx.tar.gz.asc \
-	&& curl -fSL https://www.openssl.org/source/openssl-1.1.1b.tar.gz -o openssl-1.1.1b.tar.gz \
+    # Verifying Nginx
 	&& export GNUPGHOME="$(mktemp -d)" \
 	&& found=''; \
 	for server in \
@@ -85,15 +96,14 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	test -z "$found" && echo >&2 "error: failed to fetch GPG key $GPG_KEYS" && exit 1; \
 	gpg --batch --verify nginx.tar.gz.asc nginx.tar.gz \
 	&& rm -rf "$GNUPGHOME" nginx.tar.gz.asc \
-	&& mkdir -p /usr/src \
 	&& tar -zxC /usr/src -f nginx.tar.gz \
-	&& tar -zxC /usr/src -f openssl-1.1.1b.tar.gz \
 	&& rm -f nginx.tar.gz \
-	&& rm -f openssl-1.1.1b.tar.gz \
+    # Downloading Brotli
+    && echo "Downloading Brotli" \
 	&& cd /usr/src \
-	&& git clone https://github.com/google/ngx_brotli.git \
-	&& cd ngx_brotli \
-	&& git submodule update --init \
+	&& git clone --recursive https://github.com/google/ngx_brotli.git \
+    # Building Nginx
+    && echo "Building Nginx" \
 	&& cd /usr/src/nginx-$NGINX_VERSION \
 	&& ./configure $CONFIG --with-debug \
 	&& make -j$(getconf _NPROCESSORS_ONLN) \
@@ -119,7 +129,6 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& strip /usr/sbin/nginx* \
 	&& strip /usr/lib/nginx/modules/*.so \
 	&& rm -rf /usr/src/nginx-$NGINX_VERSION \
-	&& rm -rf /usr/src/openssl-1.1.1b \
 	&& rm -rf /usr/src/ngx_brotli \
 	\
 	# Bring in gettext so we can get `envsubst`, then throw
@@ -129,14 +138,16 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& apk add --no-cache --virtual .gettext gettext \
 	&& mv /usr/bin/envsubst /tmp/ \
 	\
-	&& runDeps="$( \
-		scanelf --needed --nobanner --format '%n#p' /usr/sbin/nginx /usr/lib/nginx/modules/*.so /tmp/envsubst \
-			| tr ',' '\n' \
+    && runDeps="$( \
+		scanelf --needed --nobanner /usr/sbin/nginx /usr/lib/nginx/modules/*.so /tmp/envsubst \
+			| awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' \
 			| sort -u \
-			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
+			| xargs -r apk info --installed \
+			| sort -u \
 	)" \
 	&& apk add --no-cache --virtual .nginx-rundeps $runDeps \
 	&& apk del .build-deps \
+	&& apk del .brotli-build-deps \
 	&& apk del .gettext \
 	&& mv /tmp/envsubst /usr/local/bin/ \
 	\
@@ -151,7 +162,7 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY nginx.vh.default.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
+EXPOSE 80 443
 
 STOPSIGNAL SIGTERM
 
