@@ -5,6 +5,7 @@ Dockerized Nginx based on Alpine Linux with TLS 1.3 and Brotli support.
 Inspired by:
  - [nginxinc/docker-nginx](https://github.com/nginxinc/docker-nginx)
  - [google/ngx_brotli](https://github.com/google/ngx_brotli)
+ - [eustas/ngx_brotli](https://github.com/eustas/ngx_brotli)
  - [fholzer/docker-nginx-brotli](https://github.com/fholzer/docker-nginx-brotli)
 
 ## How to use this image
@@ -16,7 +17,7 @@ docker run --name some-nginx -v /some/content:/usr/share/nginx/html:ro -d hackin
 
 For extra information, please refer to the [official Docker Hub Nginx documentation](https://hub.docker.com/_/nginx/), since this image builds upon it.
 
-In addition, you can look for Brotli configurations at the official repository [google/ngx_brotli](https://github.com/google/ngx_brotli#configuration-directives).
+In addition, you can look for Brotli configurations at the upstream repository [eustas/ngx_brotli](https://github.com/eustas/ngx_brotli#configuration-directives).
 
 
 ## Sample config
@@ -40,7 +41,7 @@ brotli_types *;
 
 ## Modification Details
 
-Module [ngx_brotli](https://github.com/google/ngx_brotli) has been added for Brotli support.
+Module [ngx_brotli](https://github.com/eustas/ngx_brotli) has been added for Brotli support.
 
 ## Manually build from source
 
